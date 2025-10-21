@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,7 +17,6 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Style for number inputs */
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
             -webkit-appearance: none;
@@ -21,65 +25,99 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
+        #hub-bubble {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 56px;
+            height: 56px;
+            background-color: #0ea5e9; /* sky-500 */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        }
+        #hub-bubble:hover {
+            transform: scale(1.1);
+            background-color: #0284c7; /* sky-600 */
+        }
     </style>
+    <script>
+        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+    </script>
 </head>
-<body class="bg-slate-900 text-slate-200 flex flex-col items-center justify-center min-h-screen p-4 antialiased">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 flex flex-col items-center justify-center min-h-screen p-4 antialiased transition-colors duration-300">
 
-    <div class="w-full max-w-md bg-slate-800 rounded-xl shadow-2xl border border-slate-700">
-        <header class="text-center p-6 border-b border-slate-700">
-            <h1 class="text-2xl font-bold text-white">Color Converter</h1>
-            <p class="text-slate-400 mt-1">HEX &harr; RGB &harr; HSL</p>
+    <!-- Theme Toggle Button -->
+    <div class="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <button id="theme-toggle" type="button" title="Toggle light/dark mode" class="bg-white dark:bg-slate-800 p-3 rounded-full text-slate-500 dark:text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200">
+            <svg id="theme-toggle-sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun hidden"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <svg id="theme-toggle-moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon hidden"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+    </div>
+
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-700">
+        <header class="text-center p-6 border-b border-slate-200 dark:border-slate-700">
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Color Converter</h1>
+            <p class="text-slate-500 dark:text-slate-400 mt-1">HEX &harr; RGB &harr; HSL</p>
         </header>
 
         <main class="p-6 md:p-8">
             <!-- Color Preview -->
-            <div id="color-preview" class="w-full h-32 rounded-lg border-2 border-slate-600 mb-6 transition-colors duration-200"></div>
+            <div id="color-preview" class="w-full h-32 rounded-lg border-2 border-slate-200 dark:border-slate-600 mb-6 transition-colors duration-200"></div>
 
             <!-- HEX Input -->
             <div class="mb-4">
-                <label for="hex-input" class="block text-sm font-medium text-slate-400 mb-1">HEX</label>
+                <label for="hex-input" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">HEX</label>
                 <div class="relative">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">#</span>
-                    <input type="text" id="hex-input" class="w-full bg-slate-900 text-white rounded-md p-3 pl-7 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                     <button id="copy-hex" class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white transition-colors" title="Copy HEX">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
-                            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 7a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H-.5A.5.5 0 0 1-1 7z"/>
-                        </svg>
-                    </button>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 dark:text-slate-500">#</span>
+                    <input type="text" id="hex-input" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 pl-7 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                     <button id="copy-hex" class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors" title="Copy HEX">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2Zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6ZM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2Z"/>
+                         </svg>
+                     </button>
                 </div>
-                 <span id="copy-feedback" class="text-sm text-emerald-400 h-4 block mt-1"></span>
+                 <span id="copy-feedback" class="text-sm text-emerald-500 dark:text-emerald-400 h-4 block mt-1"></span>
             </div>
 
             <!-- RGB Inputs -->
             <div class="grid grid-cols-3 gap-4 mb-4">
                 <div>
-                    <label for="rgb-r" class="block text-sm font-medium text-slate-400 mb-1">R</label>
-                    <input type="number" id="rgb-r" min="0" max="255" class="w-full bg-slate-900 text-white rounded-md p-3 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <label for="rgb-r" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">R</label>
+                    <input type="number" id="rgb-r" min="0" max="255" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
-                    <label for="rgb-g" class="block text-sm font-medium text-slate-400 mb-1">G</label>
-                    <input type="number" id="rgb-g" min="0" max="255" class="w-full bg-slate-900 text-white rounded-md p-3 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <label for="rgb-g" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">G</label>
+                    <input type="number" id="rgb-g" min="0" max="255" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
-                    <label for="rgb-b" class="block text-sm font-medium text-slate-400 mb-1">B</label>
-                    <input type="number" id="rgb-b" min="0" max="255" class="w-full bg-slate-900 text-white rounded-md p-3 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <label for="rgb-b" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">B</label>
+                    <input type="number" id="rgb-b" min="0" max="255" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
             </div>
 
             <!-- HSL Inputs -->
             <div class="grid grid-cols-3 gap-4">
                 <div>
-                    <label for="hsl-h" class="block text-sm font-medium text-slate-400 mb-1">H</label>
-                    <input type="number" id="hsl-h" min="0" max="360" class="w-full bg-slate-900 text-white rounded-md p-3 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <label for="hsl-h" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">H</label>
+                    <input type="number" id="hsl-h" min="0" max="360" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
-                    <label for="hsl-s" class="block text-sm font-medium text-slate-400 mb-1">S</label>
-                    <input type="number" id="hsl-s" min="0" max="100" class="w-full bg-slate-900 text-white rounded-md p-3 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <label for="hsl-s" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">S</label>
+                    <input type="number" id="hsl-s" min="0" max="100" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
                 <div>
-                    <label for="hsl-l" class="block text-sm font-medium text-slate-400 mb-1">L</label>
-                    <input type="number" id="hsl-l" min="0" max="100" class="w-full bg-slate-900 text-white rounded-md p-3 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
+                    <label for="hsl-l" class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">L</label>
+                    <input type="number" id="hsl-l" min="0" max="100" class="w-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-white rounded-md p-3 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
                 </div>
             </div>
         </main>
@@ -220,7 +258,6 @@
 
         copyBtn.addEventListener('click', () => {
             const hexValue = `#${hexInput.value}`;
-            // Use execCommand for broader compatibility within iFrames
             const dummy = document.createElement("textarea");
             document.body.appendChild(dummy);
             dummy.value = hexValue;
@@ -238,30 +275,36 @@
         // --- Initial Load ---
         hexInput.value = '38bdf8'; // A nice sky blue to start
         updateAll('hex');
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('theme-toggle-sun-icon');
+        const moonIcon = document.getElementById('theme-toggle-moon-icon');
+
+        const updateIcons = () => {
+            if (document.documentElement.classList.contains('dark')) {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        };
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+            updateIcons();
+        });
+
+        updateIcons();
     </script>
-    <!-- Floating Hub Button Snippet -->
-    <style>
-        #hub-bubble {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            width: 56px;
-            height: 56px;
-            background-color: #0ea5e9; /* sky-500 */
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-        }
-        #hub-bubble:hover {
-            transform: scale(1.1);
-            background-color: #0284c7; /* sky-600 */
-        }
-    </style>
     
+    <!-- Floating Hub Button Snippet -->
     <a href="https://muhammadhassaanjaved.com/tools.html" id="hub-bubble" title="View All Tools" target="_blank" rel="noopener noreferrer">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"></rect>
@@ -273,4 +316,3 @@
     <!-- End of Snippet -->
 </body>
 </html>
-
